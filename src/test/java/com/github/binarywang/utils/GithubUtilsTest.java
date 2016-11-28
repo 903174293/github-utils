@@ -15,7 +15,7 @@ public class GithubUtilsTest {
 
     @DataProvider
     public Object[][] data() {
-        return new Object[][] { { "yatun 1" }, { "whumatrix" } };
+        return new Object[][] { { "abc" }, { "def" } };
     }
 
     @Test(dataProvider = "data")

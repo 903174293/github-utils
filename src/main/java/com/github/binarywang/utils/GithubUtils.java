@@ -35,10 +35,36 @@ public class GithubUtils {
     }
 
     private static void checkValidation(XmlPath htmlPath) {
+        GithubAccountType accoutType = checkAccoutType(htmlPath);
+        if (accoutType == GithubAccountType.NoneExist) {
+            throw new RuntimeException("非法 GitHub Id");
+        }
+
+        if (accoutType == GithubAccountType.Org) {
+            throw new RuntimeException("This is a GitHub Organization");
+        }
+    }
+
+    public static GithubAccountType checkAccoutType(String id) {
+        XmlPath htmlPath = given().when().get("/{id}", id.trim()).then()
+            .extract().htmlPath();
+        return checkAccoutType(htmlPath);
+    }
+
+    private static GithubAccountType checkAccoutType(XmlPath htmlPath) {
         String html = htmlPath.getString("html");
         if (html.contains("Not Found") || html.contains("Page not found")) {
-            throw new RuntimeException("非法GitHub Id");
+            return GithubAccountType.NoneExist;
         }
+
+        String orgName = htmlPath
+            .getString("**.find { it.@class == 'org-name lh-condensed' }");
+
+        if (orgName != null) {
+            return GithubAccountType.Org;
+        }
+
+        return GithubAccountType.Personal;
     }
 
     public static List<String> getStarList(String id) {

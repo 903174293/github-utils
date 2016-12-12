@@ -10,7 +10,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
-
 /**
  * @author Binary Wang
  */
@@ -19,8 +18,9 @@ public class GithubUtilsTest {
 
     @DataProvider
     public Object[][] data() {
-        return new Object[][] { { "sd" } };
+        return new Object[][] { { "binarywang" } };
     }
+
 
 
     @Test(dataProvider = "data")
@@ -29,9 +29,8 @@ public class GithubUtilsTest {
             return;
         }
 
-        System.out.println(
-            (System.currentTimeMillis() - this.startTime) + " Processing  "
-                + id);
+        System.out.println((System.currentTimeMillis() - this.startTime)
+            + " Processing  " + id);
 
         GithubAccountType accoutType = GithubUtils.checkAccoutType(id);
 
@@ -51,16 +50,32 @@ public class GithubUtilsTest {
     }
 
     @Test(dataProvider = "data")
-    public void testGetStarList(String id) {
-        String must = "/wechat-group/weixin-java-tools";
+    public void testGetUserStarList(String id) {
+        List<String> list = GithubUtils.getUserStarList(id);
+        System.err.println(list);
 
-        List<String> list = GithubUtils.getStarList(id);
         if (list.size() == 0) {
             throw new RuntimeException("this guy stars nothing");
         }
 
+        String must = "/wechat-group/weixin-java-tools";
         assertTrue(list.contains(must),
             "star a lot, but not star the required one");
     }
 
+    @DataProvider
+    public Object[][] repoList() {
+        return new Object[][] { { "/wechat-group/weixin-java-tools" },
+            { "/chanjarster/weixin-java-tools" } };
+    }
+
+    @Test(dataProvider = "repoList")
+    public void testGetRepoStarList(String repoName) {
+        List<String> list = GithubUtils.getRepoStarList(repoName);
+
+        if (list.size() == 0) {
+            throw new RuntimeException("there is no stargazer");
+        }
+
+    }
 }

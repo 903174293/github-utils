@@ -67,7 +67,7 @@ public class GithubUtils {
         return GithubAccountType.Personal;
     }
 
-    public static List<String> getStarList(String id) {
+    public static List<String> getUserStarList(String id) {
         if (StringUtils.isBlank(id)) {
             return Collections.EMPTY_LIST;
         }
@@ -79,9 +79,10 @@ public class GithubUtils {
         checkValidation(htmlPath);
 
         Object object = htmlPath.get("**.findAll "
-            + "{ it.@class == 'd-table-cell col-7 pr-3 v-align-top' }"
+            + "{ it.@class == 'd-inline-block mb-1' }"
             + ".h3.a.@href");
         System.err.println(id + "==>\n   " + object);
+
         if (object instanceof String) {
             return Lists.newArrayList(object.toString());
         }
@@ -90,6 +91,35 @@ public class GithubUtils {
             List<String> list = (ArrayList<String>) object;
             if (list.size() == 0) {
                 throw new RuntimeException("this guy stars nothing");
+            }
+
+            return list;
+        }
+
+        return null;
+    }
+
+    public static List<String> getRepoStarList(String repoName) {
+        if (StringUtils.isBlank(repoName)) {
+            return Collections.EMPTY_LIST;
+        }
+
+        XmlPath htmlPath = given().when()
+            .get(repoName.trim() + "/stargazers")
+            .then().extract().htmlPath();
+
+        Object object = htmlPath.get("**.findAll "
+            + "{ it.@class == 'follow-list-name' }.span.a.@href");
+        System.err.println(repoName + "==>\n   " + object);
+
+        if (object instanceof String) {
+            return Lists.newArrayList(object.toString());
+        }
+
+        if (object instanceof ArrayList) {
+            List<String> list = (ArrayList<String>) object;
+            if (list.size() == 0) {
+                throw new RuntimeException("there is no stargazer");
             }
 
             return list;

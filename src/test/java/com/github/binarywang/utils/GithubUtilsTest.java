@@ -8,7 +8,10 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
+import org.testng.collections.CollectionUtils;
+
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 
 /**
  * @author Binary Wang
@@ -20,7 +23,6 @@ public class GithubUtilsTest {
     public Object[][] data() {
         return new Object[][] { { "binarywang" } };
     }
-
 
 
     @Test(dataProvider = "data")
@@ -65,7 +67,10 @@ public class GithubUtilsTest {
 
     @DataProvider
     public Object[][] repoList() {
-        return new Object[][] { { "/wechat-group/weixin-java-tools" },
+        return new Object[][] {
+            { "/Wechat-Group/weixin-mp-demo" },
+            { "/Wechat-Group/weixin-java-tools-springmvc" },
+            { "/wechat-group/weixin-java-tools" },
             { "/chanjarster/weixin-java-tools" } };
     }
 
@@ -77,5 +82,25 @@ public class GithubUtilsTest {
             throw new RuntimeException("there is no stargazer");
         }
 
+        System.out.println("repo:\n " + repoName);
+        System.out.println("star list:\n    " + list);
+    }
+
+    @Test
+    public void testCompareRepoStarList() {
+        List<String> wechatGroup = GithubUtils
+            .getRepoStarList("/wechat-group/weixin-java-tools");
+
+        List<String> chanjarster = GithubUtils
+            .getRepoStarList("/chanjarster/weixin-java-tools");
+
+        List<String> common = Lists.newArrayList(wechatGroup);
+        common.retainAll(chanjarster);
+        System.out.println("common:\n   " + common);
+
+        List<String> onlyInWechat = Lists.newArrayList(wechatGroup);
+        onlyInWechat.removeAll(chanjarster);
+        System.out.println(
+            "more in wechat group:\n    " + onlyInWechat);
     }
 }

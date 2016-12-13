@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.testng.collections.Lists;
 
 import io.restassured.RestAssured;
+import io.restassured.internal.path.xml.NodeImpl;
 import io.restassured.path.xml.XmlPath;
 
 /**
@@ -99,18 +100,17 @@ public class GithubUtils {
         return null;
     }
 
-    public static List<String> getRepoStarList(String repoName) {
-        if (StringUtils.isBlank(repoName)) {
-            return Collections.EMPTY_LIST;
-        }
 
+    private static List<String> getRepoStarListByPage(String repoName,
+            int page) {
         XmlPath htmlPath = given().when()
-            .get(repoName.trim() + "/stargazers")
+            .get(repoName.trim() + "/stargazers?page={page}", page)
             .then().extract().htmlPath();
 
         Object object = htmlPath.get("**.findAll "
             + "{ it.@class == 'follow-list-name' }.span.a.@href");
-        System.err.println(repoName + "==>\n   " + object);
+        System.err
+            .println(repoName + " ---> Page " + page + " ==>\n   " + object);
 
         if (object instanceof String) {
             return Lists.newArrayList(object.toString());
@@ -122,9 +122,41 @@ public class GithubUtils {
                 throw new RuntimeException("there is no stargazer");
             }
 
+            Object pagination = htmlPath
+                .get("**.findAll " + "{ it.@class == 'pagination' }");
+            if (pagination == null || (pagination instanceof ArrayList
+                && ((ArrayList<?>) pagination).size() == 0)) {
+                //没有分页，就这一页。
+                return list;
+            }
+
+            //有分页
+            NodeImpl nodes = (NodeImpl) pagination;
+            NodeImpl spanNode = (NodeImpl) nodes.get("span");
+            if (spanNode != null) {
+                String spanValue = (String) spanNode.getValue();
+                if (spanValue.equals("Next")) {
+                    //说明没有下一页了，直接返回
+                    return list;
+                }
+            } else {
+                //spanNode如果为空，则说明分页里面Previous和Next都是链接，意味着有下一页
+            }
+
+            //将下一页的结果合并入本页
+            list.addAll(getRepoStarListByPage(repoName, page + 1));
+
             return list;
         }
 
         return null;
+    }
+
+    public static List<String> getRepoStarList(String repoName) {
+        if (StringUtils.isBlank(repoName)) {
+            return Collections.EMPTY_LIST;
+        }
+        
+        return getRepoStarListByPage(repoName, 1);
     }
 }
